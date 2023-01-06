@@ -1,0 +1,13 @@
+[Unit]
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=simple
+User=kafka
+ExecStart=/bin/sh -c '{{ installation_dir }}/bin/kafka-server-start.sh {{ installation_dir }}/config/server.properties > {{ installation_dir }}/kafka.log 2>&1'
+ExecStop={{ installation_dir }}/bin/kafka-server-stop.sh
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target

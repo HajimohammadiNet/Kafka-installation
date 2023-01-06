@@ -1,0 +1,11 @@
+dataDir=/var/kafka/zookeeper
+clientPort=2181
+maxClientCnxns=0
+admin.enableServer=false
+
+tickTime=2000
+initLimit=5
+syncLimit=2
+server.1={{ kafka1_ip }}:2888:3888
+server.2={{ kafka2_ip }}:2888:3888
+server.3={{ kafka3_ip }}:2888:3888

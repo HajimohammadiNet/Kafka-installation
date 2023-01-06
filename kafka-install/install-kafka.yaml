@@ -1,0 +1,151 @@
+- name: Installing Kafka on Ubuntu
+  hosts: all
+  become: true
+  become_user: root
+  tasks:
+    - name: gather specific variables
+      include_vars: "vars/kafka-vars.yaml"
+
+    - name: Install JRE after apt update
+      become: yes
+      apt:
+        name: 
+          - default-jre
+        state: present
+        update_cache: yes
+
+    - name: Create a group 
+      become: yes
+      group:
+        name: "{{ username }}"
+        state: present
+
+    - name: Create an user 
+      become: yes
+      user:
+        name: "{{ username }}"
+        state: present
+        group: kafka
+
+    - name: Create a Installation Directory 
+      become: yes
+      file:
+        path: "{{ installation_dir }}"
+        state: directory
+        mode: 0755
+        owner: kafka
+        group: kafka
+ 
+    - name: Download kafka
+      get_url:
+        url: "{{ download_link }}"
+        dest: "{{ installation_dir }}"
+        mode: '0755'
+        owner: kafka
+        group: kafka
+      tags:
+      - never
+
+    - name: Unzip 
+      become: yes
+      become_user: root
+      unarchive:
+        src:  "{{ installation_dir }}/kafka_2.13-3.2.3.tgz"
+        dest: "{{ installation_dir }}"
+        mode: 0755
+        remote_src: yes
+        owner: kafka
+        group: kafka
+
+    - name: Move all the files to parent Directory
+      become: yes
+      become_user: root
+      shell: 
+        mv {{ installation_dir }}/kafka_*/* {{ installation_dir }}/.
+      tags:
+      - never
+
+    - name: Update the Java Heap Size for Kafka
+      become: yes
+      replace:
+        path: "{{ installation_dir }}/bin/kafka-server-start.sh"
+        regexp: 'export KAFKA_HEAP_OPTS=(".+")'
+        replace: 'export KAFKA_HEAP_OPTS="-Xmx1024M -Xms1024M"'
+        backup: yes
+
+    - name: Config server.properties
+      template:
+        src: "templates/server.properties.j2"
+        dest: "{{ installation_dir }}/config/server.properties"
+
+    - name: Config zookeeper.properties
+      template:
+        src: "templates/zookeeper.properties.j2"
+        dest: "{{ installation_dir }}/config/zookeeper.properties"
+
+    - name: Create zookeeper directory
+      file:
+        path: "{{ installation_dir }}/zookeeper"
+        state: directory
+        mode: 0755
+        owner: kafka
+        group: kafka
+
+    - name: create zookeeper id
+      template:
+        src: "templates/myid.j2"
+        dest: "{{ installation_dir }}/zookeeper/myid"
+
+    - name: install unit file to systemd for zookeeper service
+      template:
+        src: templates/zookeeper.service.j2
+        dest: /etc/systemd/system/zookeeper.service
+        owner: root
+        group: root
+        mode: 0600
+
+   - name: install unit file to systemd for kafka service
+      template:
+        src: templates/kafka.service.j2
+        dest: /etc/systemd/system/kafka.service
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Start zookeeper service
+      tags: startservices
+      become: yes
+      systemd:
+        daemon_reload: true
+        name: zookeeper.service
+        state: started
+        enabled: yes
+
+    - name: Start kafka service
+      tags: startservices
+      become: yes
+      systemd:
+        daemon_reload: true
+        name: kafka.service
+        state: started
+        enabled: yes
+
+
+    - name: Validating if zookeeper is up and listening on port 2181
+      wait_for:
+        host: {{ ansible_ens160.ipv4.address }}
+        port: 2181
+        delay: 10
+        timeout: 30
+        state: started
+        msg: "Zookeeper not seem to be running"
+
+    - name: Validating if Kafka is up and listening on port 9092
+      wait_for:
+        host: {{ ansible_ens160.ipv4.address }} 
+        port: 9092
+        delay: 10
+        timeout: 30
+        state: started
+        msg: "Kafka not seem to be running"
+      

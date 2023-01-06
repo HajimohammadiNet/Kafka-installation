@@ -1,0 +1,10 @@
+installation_dir: /var/kafka
+username: kafka
+download_link: https://dlcdn.apache.org/kafka/3.2.3/kafka_2.13-3.2.3.tgz
+kafka1_ip: x.x.x.x
+kafka2_ip: x.x.x.x
+kafka3_ip: x.x.x.x
+log_retention: 2680000
+partition_number: 8
+replication_factor: 3
+delete_topic: true

@@ -1,0 +1,24 @@
+num.network.threads=3
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+num.recovery.threads.per.data.dir=1
+
+offsets.topic.replication.factor=3
+transaction.state.log.replication.factor=3
+transaction.state.log.min.isr=2
+
+log.retention.ms={{ log_retention }}
+log.segment.bytes=100000000
+log.retention.check.interval.ms=300000
+zookeeper.connection.timeout.ms=18000
+group.initial.rebalance.delay.ms=0
+
+broker.id={{ ansible_hostname | split('-') | last }}
+listeners=PLAINTEXT://{{ ansible_ens160.ipv4.address }}:9092
+log.dirs=/var/kafka/logs
+num.partitions={{ partition_number }}
+default.replication.factor={{ replication_factor }}
+zookeeper.connect={{ kafka1_ip }}:2181,{{ kafka2_ip }}:2181,{{ kafka3_ip }}:2181
+delete.topic.enable = {{ delete_topic }}
