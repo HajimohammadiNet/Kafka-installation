@@ -1,2 +1,2 @@
 # Kafka-installation
-Installin kafka by Ansible
+Installing kafka by Ansible
